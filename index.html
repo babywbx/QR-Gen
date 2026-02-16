@@ -1,0 +1,1058 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+        <meta name="description" content="在线二维码生成器，支持自定义颜色、大小和实时预览。无需注册，本地生成，安全快速。Simple and fast online QR code generator." />
+        <meta name="author" content="Babywbx" />
+        <meta property="og:title" content="二维码生成器 | QR Code Generator" />
+        <meta property="og:description" content="在线二维码生成器，支持自定义颜色、大小和实时预览。无需注册，本地生成，安全快速。" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="二维码生成器 | QR Code Generator" />
+        <meta name="twitter:description" content="在线二维码生成器，支持自定义颜色和大小，无需注册，本地生成。" />
+        <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23ff69b4'/%3E%3Crect x='6' y='6' width='8' height='8' rx='2' fill='white'/%3E%3Crect x='18' y='6' width='8' height='8' rx='2' fill='white'/%3E%3Crect x='6' y='18' width='8' height='8' rx='2' fill='white'/%3E%3Crect x='20' y='20' width='3' height='3' rx='0.5' fill='white'/%3E%3Crect x='25' y='20' width='1.5' height='1.5' fill='white'/%3E%3Crect x='20' y='25' width='1.5' height='1.5' fill='white'/%3E%3Crect x='24' y='24' width='2' height='2' rx='0.5' fill='white'/%3E%3C/svg%3E">
+        <title>二维码生成器 | QR Code Generator</title>
+        <script src="qrcode.js"></script>
+        <style>
+            :root {
+                --bg-primary: #f5f5f5;
+                --bg-secondary: #ffffff;
+                --text-primary: #333333;
+                --text-secondary: #666666;
+                --accent-color: #ff69b4;
+                --border-color: #e0e0e0;
+                --shadow-color: rgba(0, 0, 0, 0.1);
+            }
+
+            [data-theme="dark"] {
+                --bg-primary: #1a1a1a;
+                --bg-secondary: #2d2d2d;
+                --text-primary: #ffffff;
+                --text-secondary: #b0b0b0;
+                --accent-color: #ff69b4;
+                --border-color: #404040;
+                --shadow-color: rgba(0, 0, 0, 0.3);
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+                -webkit-tap-highlight-color: transparent;
+                transition: background-color 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                            color 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                            border-color 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                *, *::before, *::after {
+                    animation-duration: 0.01ms !important;
+                    animation-iteration-count: 1 !important;
+                    transition-duration: 0.01ms !important;
+                }
+            }
+
+            body {
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                background-color: var(--bg-primary);
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                color: var(--text-primary);
+                padding: 1rem;
+                padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+            }
+
+            .container {
+                margin: auto;
+                background: var(--bg-secondary);
+                padding: 2.5rem;
+                border-radius: 20px;
+                box-shadow: 0 8px 20px var(--shadow-color);
+                text-align: center;
+                width: 90%;
+                max-width: 420px;
+                position: relative;
+                transition: min-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                            max-width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                            box-shadow 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                overflow: hidden;
+            }
+
+            .container.expanded {
+                min-height: 500px;
+            }
+
+            h1 {
+                color: var(--text-primary);
+                margin: 0 0 1.5rem 0;
+                font-size: 1.75rem;
+                font-weight: 600;
+            }
+
+            .input-wrapper {
+                position: relative;
+                margin: 1rem 0 0.5rem 0;
+                z-index: 10;
+            }
+
+            textarea {
+                width: 100%;
+                padding: 10px 40px 10px 12px;
+                border: 2px solid var(--border-color);
+                border-radius: 12px;
+                font-size: 1rem;
+                background: var(--bg-secondary);
+                color: var(--text-primary);
+                transition: border-color 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                            box-shadow 0.2s ease;
+                resize: none;
+                min-height: 48px;
+                height: 48px;
+                overflow-y: hidden;
+                font-family: inherit;
+                display: block;
+                line-height: 1.5;
+                -webkit-appearance: none;
+                appearance: none;
+            }
+
+            textarea:focus {
+                outline: none;
+                border-color: var(--accent-color);
+                box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.15);
+            }
+
+            textarea:hover {
+                border-color: var(--accent-color);
+            }
+
+            .controls {
+                display: flex;
+                gap: 1rem;
+                justify-content: center;
+                flex-wrap: wrap;
+                max-height: 0;
+                opacity: 0;
+                margin: 0;
+                overflow: hidden;
+                transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                position: relative;
+                z-index: 5;
+            }
+
+            .container.expanded .controls {
+                max-height: 150px;
+                opacity: 1;
+                margin: 1rem 0;
+                overflow: visible;
+            }
+
+            .control-group {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: var(--text-secondary);
+                font-size: 0.9rem;
+            }
+
+            .control-group-full {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .size-label {
+                min-width: 3.5em;
+                text-align: left;
+                font-variant-numeric: tabular-nums;
+            }
+
+            input[type="color"] {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 32px;
+                height: 32px;
+                padding: 0;
+                border: 2px solid var(--border-color);
+                border-radius: 50%;
+                cursor: pointer;
+                background: none;
+                overflow: hidden;
+            }
+
+            input[type="color"]::-webkit-color-swatch-wrapper {
+                padding: 0;
+            }
+
+            input[type="color"]::-webkit-color-swatch {
+                border: none;
+                border-radius: 50%;
+            }
+
+            input[type="color"]:focus-visible {
+                outline: 2px solid var(--accent-color);
+                outline-offset: 2px;
+            }
+
+            input[type="range"] {
+                -webkit-appearance: none;
+                appearance: none;
+                height: 6px;
+                background: var(--border-color);
+                border-radius: 3px;
+                outline: none;
+                cursor: pointer;
+                flex: 1;
+            }
+
+            input[type="range"]::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                width: 18px;
+                height: 18px;
+                background: var(--accent-color);
+                border-radius: 50%;
+                cursor: pointer;
+                box-shadow: 0 2px 6px rgba(255, 105, 180, 0.3);
+                transition: transform 0.15s ease, box-shadow 0.15s ease;
+            }
+
+            input[type="range"]::-webkit-slider-thumb:hover {
+                transform: scale(1.15);
+                box-shadow: 0 2px 8px rgba(255, 105, 180, 0.5);
+            }
+
+            input[type="range"]::-webkit-slider-thumb:active {
+                transform: scale(0.95);
+            }
+
+            input[type="range"]::-moz-range-thumb {
+                width: 18px;
+                height: 18px;
+                background: var(--accent-color);
+                border-radius: 50%;
+                cursor: pointer;
+                border: none;
+                box-shadow: 0 2px 6px rgba(255, 105, 180, 0.3);
+            }
+
+            input[type="range"]::-moz-range-track {
+                height: 6px;
+                background: var(--border-color);
+                border-radius: 3px;
+                border: none;
+            }
+
+            input[type="range"]:focus-visible::-webkit-slider-thumb {
+                box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.3);
+            }
+
+            .qr-wrapper {
+                max-height: 0;
+                opacity: 0;
+                margin: 0;
+                transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                            opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                            margin 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                overflow: visible;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                position: relative;
+                z-index: 1;
+            }
+
+            .container.expanded .qr-wrapper {
+                opacity: 1;
+                margin: 1.5rem 0;
+            }
+
+            #qrcode-canvas {
+                display: block;
+                background: white;
+                padding: 1.5rem;
+                border-radius: 16px;
+                box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.18),
+                            0px 4px 12px rgba(0, 0, 0, 0.12);
+                transition: box-shadow 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                max-width: 100%;
+                height: auto !important;
+            }
+
+            [data-theme="dark"] #qrcode-canvas {
+                box-shadow: 0px 10px 30px rgba(255, 255, 255, 0.2),
+                            0px 4px 12px rgba(255, 255, 255, 0.15);
+            }
+
+            .placeholder {
+                color: var(--text-secondary);
+                margin: 0;
+                font-size: 0.95rem;
+                opacity: 0.8;
+                transition: opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            }
+
+            .placeholder.hidden {
+                display: none;
+            }
+
+            .placeholder.error {
+                color: var(--accent-color);
+                font-weight: 500;
+            }
+
+            .preview-message {
+                text-align: center;
+                padding: 2rem;
+                color: var(--text-secondary);
+                animation: fadeIn 0.3s ease;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+            }
+
+            @media (max-width: 480px) {
+                .preview-message {
+                    padding: 1rem;
+                }
+            }
+
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
+            .action-buttons {
+                display: flex;
+                gap: 1rem;
+                justify-content: center;
+                max-height: 0;
+                opacity: 0;
+                margin: 0;
+                overflow: hidden;
+                pointer-events: none;
+                transform: translateY(10px);
+                transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .container.expanded .action-buttons {
+                max-height: 60px;
+                opacity: 1;
+                margin-top: 1.5rem;
+                pointer-events: auto;
+                transform: translateY(0);
+                overflow: visible;
+            }
+
+            .action-buttons .btn {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .btn {
+                border: none;
+                padding: 0.75rem 1.5rem;
+                border-radius: 12px;
+                font-size: 0.95rem;
+                font-weight: 500;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                touch-action: manipulation;
+                transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s, filter 0.2s;
+            }
+
+            .btn:hover {
+                transform: translateY(-2px);
+            }
+
+            .btn:active {
+                transform: translateY(0);
+            }
+
+            .btn:focus-visible {
+                outline: 2px solid var(--accent-color);
+                outline-offset: 2px;
+            }
+
+            .btn-primary {
+                background: var(--accent-color);
+                color: white;
+                border: 1px solid var(--accent-color);
+            }
+
+            .btn-primary:hover {
+                filter: brightness(1.1);
+                box-shadow: 0 4px 12px rgba(255, 105, 180, 0.4);
+            }
+
+            .btn-secondary {
+                background: var(--bg-primary);
+                color: var(--text-primary);
+                border: 1px solid var(--border-color);
+            }
+
+            .btn-secondary:hover {
+                background: var(--accent-color);
+                color: white;
+                border-color: var(--accent-color);
+                box-shadow: 0 4px 12px rgba(255, 105, 180, 0.3);
+            }
+
+            .clear-btn {
+                position: absolute;
+                right: 10px;
+                top: 12px;
+                width: 24px;
+                height: 24px;
+                background: transparent;
+                border: none;
+                color: var(--text-secondary);
+                cursor: pointer;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                opacity: 0;
+                transition: all 0.2s;
+                font-size: 14px;
+            }
+
+            .clear-btn:hover {
+                background-color: var(--border-color);
+                color: var(--text-primary);
+                opacity: 1;
+            }
+
+            .clear-btn.visible,
+            .input-wrapper:hover .clear-btn,
+            .clear-btn:focus {
+                opacity: 1;
+            }
+
+            .char-counter {
+                font-size: 0.85rem;
+                color: var(--text-secondary);
+                text-align: right;
+                margin-top: 0.25rem;
+                min-height: 1.2rem;
+                opacity: 0;
+                transition: opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            }
+
+            .char-counter.visible {
+                opacity: 1;
+            }
+
+            .char-counter.warning {
+                color: var(--accent-color);
+                font-weight: 500;
+            }
+
+            .theme-toggle {
+                position: absolute;
+                top: 1.25rem;
+                right: 1.25rem;
+                background: var(--bg-secondary);
+                border: 2px solid var(--border-color);
+                color: var(--text-primary);
+                padding: 8px;
+                border-radius: 12px;
+                cursor: pointer;
+                font-size: 1.2rem;
+                line-height: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                touch-action: manipulation;
+                transition: background-color 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                            border-color 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                            color 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                            transform 0.2s ease;
+            }
+
+            .theme-toggle:hover {
+                background-color: var(--accent-color);
+                border-color: var(--accent-color);
+                color: white;
+            }
+
+            .theme-toggle:active {
+                transform: scale(0.92);
+            }
+
+            .theme-toggle:focus-visible {
+                outline: 2px solid var(--accent-color);
+                outline-offset: 2px;
+            }
+
+            .theme-toggle.switching {
+                animation: iconSwitch 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .container.resizing,
+            .container.resizing .qr-wrapper {
+                transition: all 0.3s ease-out !important;
+            }
+
+            @keyframes iconSwitch {
+                0% {
+                    transform: scale(1) rotate(0deg);
+                }
+                50% {
+                    transform: scale(0) rotate(180deg);
+                    opacity: 0.3;
+                }
+                100% {
+                    transform: scale(1) rotate(360deg);
+                }
+            }
+
+            .shortcut-hint {
+                display: none;
+            }
+
+            @media (hover: hover) and (pointer: fine) {
+                .shortcut-hint {
+                    display: inline;
+                    opacity: 0.5;
+                    font-size: 0.8em;
+                }
+            }
+
+            @media (max-width: 480px) {
+                body {
+                    padding: 1.5rem;
+                    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+                }
+
+                .container {
+                    padding: 1.25rem;
+                    padding-bottom: 1.5rem;
+                    border-radius: 20px;
+                    width: 100%;
+                    box-shadow: 0 4px 20px var(--shadow-color);
+                    margin: auto 0;
+                }
+
+                h1 {
+                    font-size: 1.5rem;
+                    margin-bottom: 1.25rem;
+                }
+
+                textarea {
+                    font-size: 16px; /* prevents iOS auto-zoom on focus */
+                    padding: 12px;
+                }
+
+                .theme-toggle {
+                    width: 40px;
+                    height: 40px;
+                    top: 1rem;
+                    right: 1rem;
+                    background: var(--bg-primary);
+                    border-color: transparent;
+                    box-shadow: 0 2px 8px var(--shadow-color);
+                }
+
+                .controls {
+                    gap: 0.75rem;
+                }
+
+                .btn {
+                    padding: 0.875rem;
+                    font-size: 1rem;
+                }
+
+                input[type="color"] {
+                    width: 40px;
+                    height: 40px;
+                }
+
+                input[type="range"]::-webkit-slider-thumb {
+                    width: 22px;
+                    height: 22px;
+                }
+
+                input[type="range"]::-moz-range-thumb {
+                    width: 22px;
+                    height: 22px;
+                }
+
+                .placeholder {
+                    margin: -0.8rem 0 0 0;
+                }
+            }
+
+            .footer {
+                margin-top: 1rem;
+                font-size: 0.8rem;
+                color: var(--text-secondary);
+                opacity: 0.5;
+                letter-spacing: 0.02em;
+            }
+
+            .footer a {
+                color: inherit;
+                text-decoration: none;
+                transition: color 0.2s, opacity 0.2s;
+            }
+
+            .footer a:hover {
+                color: var(--accent-color);
+                opacity: 1;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <button
+                class="theme-toggle"
+                aria-label="切换主题"
+            >
+                🌙
+            </button>
+            <h1>二维码生成器</h1>
+            <div class="input-wrapper">
+                <textarea
+                    id="input"
+                    placeholder="在此输入文本... (支持换行输入)"
+                    autocomplete="off"
+                    spellcheck="false"
+                    autofocus
+                    maxlength="2000"
+                ></textarea>
+                <button class="clear-btn" id="clearBtn" aria-label="清空内容" title="清空">✕</button>
+                <div class="char-counter" id="charCounter"></div>
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label for="colorDark">前景色</label>
+                    <input type="color" id="colorDark" value="#000000" title="二维码颜色">
+                </div>
+                <div class="control-group">
+                    <label for="colorLight">背景色</label>
+                    <input type="color" id="colorLight" value="#ffffff" title="背景颜色">
+                </div>
+                <div class="control-group control-group-full">
+                    <label for="sizeSlider">大小</label>
+                    <input type="range" id="sizeSlider" min="100" max="2000" value="200" step="100" title="调整二维码大小">
+                    <span id="sizeValue" class="size-label">200px</span>
+                </div>
+            </div>
+
+            <div class="qr-wrapper">
+                <canvas id="qrcode-canvas"></canvas>
+                <div id="preview-message" class="preview-message" style="display: none;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📏</div>
+                    <p>尺寸过大，已隐藏预览</p>
+                    <p style="font-size: 0.9rem; opacity: 0.8;">请直接下载查看原图</p>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-secondary" id="copyBtn" title="复制图片" aria-label="复制二维码图片">
+                    📋 复制
+                </button>
+                <button class="btn btn-primary" id="downloadBtn" aria-label="下载二维码图片">
+                    📥 下载 <span class="shortcut-hint"></span>
+                </button>
+            </div>
+            <div class="placeholder">输入内容即时生成二维码</div>
+        </div>
+        <footer class="footer">Made by <a href="https://github.com/Babywbx" target="_blank" rel="noopener">Babywbx</a></footer>
+
+        <script>
+            const input = document.getElementById("input");
+            const clearBtn = document.getElementById("clearBtn");
+            const container = document.querySelector(".container");
+            const placeholder = document.querySelector(".placeholder");
+            const canvas = document.getElementById("qrcode-canvas");
+            const themeToggle = document.querySelector(".theme-toggle");
+            const downloadBtn = document.getElementById("downloadBtn");
+            const copyBtn = document.getElementById("copyBtn");
+            const charCounter = document.getElementById("charCounter");
+            const colorDarkInput = document.getElementById("colorDark");
+            const colorLightInput = document.getElementById("colorLight");
+            const sizeSlider = document.getElementById("sizeSlider");
+            const sizeValueLabel = document.getElementById("sizeValue");
+            const previewMessage = document.getElementById("preview-message");
+            const qrWrapper = document.querySelector(".qr-wrapper");
+            const body = document.body;
+
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 480;
+            const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.userAgentData?.platform || navigator.platform);
+
+            let isExpanding = false;
+            let expansionTimeout;
+
+            const THEME_STORAGE_KEY = 'qr-generator-theme';
+            const MAX_INPUT_LENGTH = 2000;
+
+            const shortcutHint = downloadBtn.querySelector('.shortcut-hint');
+            if (shortcutHint) {
+                shortcutHint.textContent = isMac ? '⌘S' : 'Ctrl+S';
+                downloadBtn.title = `下载图片 (${isMac ? '⌘S' : 'Ctrl+S'})`;
+            }
+
+            function getPreviewSizeLimit() {
+                const isMobile = window.innerWidth <= 480;
+                const uiOverhead = isMobile ? 350 : 450;
+                const heightLimit = window.innerHeight - uiOverhead;
+                const widthLimit = window.innerWidth - (isMobile ? 40 : 100);
+                return Math.max(250, Math.min(heightLimit, widthLimit));
+            }
+
+            function initQRCode(text, colorDark = "#000000", colorLight = "#ffffff", size = 200) {
+                // Clear residual inline styles from Safari expansion workaround
+                canvas.style.removeProperty('width');
+                canvas.style.removeProperty('height');
+                canvas.style.backgroundColor = colorLight;
+
+                QRCode.toCanvas(canvas, text, {
+                    width: parseInt(size),
+                    margin: 0,
+                    color: { dark: colorDark, light: colorLight },
+                    errorCorrectionLevel: 'H'
+                }, function (error) {
+                    if (error) console.error(error);
+
+                    // QRCode.toCanvas may produce off-by-one dimensions (e.g. 1799 instead of 1800),
+                    // rescale to exact target size
+                    const targetSize = parseInt(size);
+                    if (canvas.width !== targetSize) {
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = canvas.width;
+                        tempCanvas.height = canvas.height;
+                        tempCanvas.getContext('2d').drawImage(canvas, 0, 0);
+
+                        canvas.width = targetSize;
+                        canvas.height = targetSize;
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = colorLight;
+                        ctx.fillRect(0, 0, targetSize, targetSize);
+                        ctx.drawImage(tempCanvas, 0, 0, targetSize, targetSize);
+                    }
+                });
+            }
+
+            function debounce(func, wait) {
+                let timeout;
+                return function (...args) {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(this, args), wait);
+                };
+            }
+
+            function throttle(func, limit) {
+                let lastFunc;
+                let lastRan;
+                return function(...args) {
+                    const context = this;
+                    if (!lastRan) {
+                        func.apply(context, args);
+                        lastRan = Date.now();
+                    } else {
+                        clearTimeout(lastFunc);
+                        lastFunc = setTimeout(function() {
+                            if ((Date.now() - lastRan) >= limit) {
+                                func.apply(context, args);
+                                lastRan = Date.now();
+                            }
+                        }, limit - (Date.now() - lastRan));
+                    }
+                }
+            }
+
+            function applyTheme(isDark) {
+                if (isDark) {
+                    body.setAttribute("data-theme", "dark");
+                    themeToggle.textContent = "☀️";
+                    themeToggle.setAttribute("aria-label", "切换到浅色模式");
+                } else {
+                    body.removeAttribute("data-theme");
+                    themeToggle.textContent = "🌙";
+                    themeToggle.setAttribute("aria-label", "切换到深色模式");
+                }
+            }
+
+            function toggleTheme() {
+                const isDark = !body.hasAttribute("data-theme");
+
+                themeToggle.classList.add('switching');
+                setTimeout(() => applyTheme(isDark), 250);
+                setTimeout(() => themeToggle.classList.remove('switching'), 500);
+
+                try {
+                    localStorage.setItem(THEME_STORAGE_KEY, isDark ? 'dark' : 'light');
+                } catch (e) {}
+            }
+
+            function initTheme() {
+                let savedTheme;
+                try { savedTheme = localStorage.getItem(THEME_STORAGE_KEY); } catch (e) {}
+
+                if (savedTheme) {
+                    applyTheme(savedTheme === 'dark');
+                } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+                    applyTheme(true);
+                }
+            }
+
+            function generateQR(text) {
+                if (typeof QRCode === 'undefined') {
+                    placeholder.textContent = '二维码库加载失败，请刷新页面';
+                    placeholder.classList.add('error');
+                    return;
+                }
+
+                if (text) {
+                    const size = parseInt(sizeSlider.value);
+                    const previewLimit = getPreviewSizeLimit();
+
+                    if (size > previewLimit) {
+                        canvas.style.display = 'none';
+                        previewMessage.style.display = 'block';
+                        container.style.maxWidth = '';
+                        container.style.minHeight = '';
+                        qrWrapper.style.maxHeight = '300px';
+                    } else {
+                        canvas.style.display = 'block';
+                        previewMessage.style.display = 'none';
+                        container.style.maxWidth = `${Math.max(420, size + 80)}px`;
+                        container.style.minHeight = `${300 + size}px`;
+
+                        const isMobile = window.innerWidth <= 480;
+                        const displaySize = isMobile ? Math.min(size, window.innerWidth - 80) : size;
+                        qrWrapper.style.maxHeight = `${displaySize + 50}px`;
+                    }
+
+                    if (!container.classList.contains("expanded")) {
+                        if (isSafari || isMobileDevice) {
+                            // Pre-set canvas dimensions to prevent thin-bar glitch during expand animation
+                            canvas.width = size;
+                            canvas.height = size;
+                            canvas.style.setProperty('width', `${size}px`, 'important');
+                            canvas.style.setProperty('height', `${size}px`, 'important');
+
+                            isExpanding = true;
+                            container.classList.add("expanded");
+                            placeholder.classList.add("hidden");
+
+                            clearTimeout(expansionTimeout);
+                            expansionTimeout = setTimeout(() => {
+                                isExpanding = false;
+                                if (container.classList.contains("expanded")) {
+                                    canvas.style.removeProperty('width');
+                                    canvas.style.removeProperty('height');
+                                    generateQR(input.value);
+                                }
+                            }, 250);
+                            return;
+                        } else {
+                            container.classList.add("expanded");
+                            placeholder.classList.add("hidden");
+                        }
+                    }
+
+                    if (isExpanding) return;
+                    initQRCode(text, colorDarkInput.value, colorLightInput.value, size);
+                } else {
+                    clearTimeout(expansionTimeout);
+                    isExpanding = false;
+
+                    if (isSafari || isMobileDevice) {
+                        canvas.style.removeProperty('width');
+                        canvas.style.removeProperty('height');
+                    }
+
+                    container.style.maxWidth = '';
+                    container.style.minHeight = '';
+                    qrWrapper.style.maxHeight = '';
+                    container.classList.remove("expanded");
+                    placeholder.classList.remove("hidden");
+                    canvas.style.display = 'block';
+                    previewMessage.style.display = 'none';
+
+                    setTimeout(() => {
+                        if (!input.value) {
+                            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+                        }
+                    }, 500);
+                }
+            }
+
+            function updateCharCounter(length) {
+                if (length > 0) {
+                    charCounter.textContent = `${length}/${MAX_INPUT_LENGTH}`;
+                    charCounter.classList.add("visible");
+                    charCounter.classList.toggle("warning", length > MAX_INPUT_LENGTH * 0.9);
+                } else {
+                    charCounter.classList.remove("visible");
+                }
+            }
+
+            function getDownloadFileName() {
+                const text = input.value.trim();
+                if (text) {
+                    const hint = text.substring(0, 20)
+                        .replace(/[^a-zA-Z0-9\u4e00-\u9fff_-]/g, '_')
+                        .replace(/_+/g, '_')
+                        .replace(/^_|_$/g, '');
+                    if (hint) return `qrcode_${hint}.png`;
+                }
+                return `qrcode_${Date.now()}.png`;
+            }
+
+            function downloadQRCode() {
+                if (!container.classList.contains('expanded')) {
+                    alert("请先生成二维码");
+                    return;
+                }
+
+                // Render full-size QR if preview was hidden due to size limit
+                if (canvas.style.display === 'none') {
+                    initQRCode(input.value, colorDarkInput.value, colorLightInput.value, sizeSlider.value);
+                }
+
+                try {
+                    const link = document.createElement('a');
+                    link.download = getDownloadFileName();
+                    link.href = canvas.toDataURL();
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch (e) {
+                    console.error("Download failed:", e);
+                    alert("下载失败，请重试");
+                }
+            }
+
+            function copyQRCode() {
+                if (!container.classList.contains('expanded')) {
+                    alert("请先生成二维码");
+                    return;
+                }
+
+                if (canvas.style.display === 'none') {
+                    initQRCode(input.value, colorDarkInput.value, colorLightInput.value, sizeSlider.value);
+                }
+
+                const originalText = copyBtn.innerHTML;
+                const showFeedback = (text, duration = 2000) => {
+                    copyBtn.innerHTML = text;
+                    setTimeout(() => { copyBtn.innerHTML = originalText; }, duration);
+                };
+
+                try {
+                    // Pass blob as Promise to ClipboardItem for Safari compatibility
+                    const item = new ClipboardItem({
+                        'image/png': new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
+                    });
+
+                    navigator.clipboard.write([item]).then(() => {
+                        showFeedback("✅ 已复制");
+                    }).catch(() => {
+                        showFeedback("❌ 复制失败，请下载", 3000);
+                    });
+                } catch (err) {
+                    showFeedback("❌ 浏览器不支持复制图片", 3000);
+                }
+            }
+
+            const debouncedGenerateQR = debounce((text) => generateQR(text), 100);
+            const throttledGenerateQR = throttle((text) => generateQR(text), 120);
+
+            const debouncedRefreshPreview = debounce(() => {
+                if (input.value.trim()) generateQR(input.value);
+            }, 150);
+
+            function autoResizeTextarea() {
+                this.style.height = '48px';
+                this.style.height = this.scrollHeight + 4 + 'px';
+            }
+
+            themeToggle.addEventListener("click", toggleTheme);
+
+            input.addEventListener("input", (e) => {
+                const rawValue = e.target.value;
+                autoResizeTextarea.call(e.target);
+                updateCharCounter(rawValue.length);
+                clearBtn.classList.toggle("visible", rawValue.length > 0);
+
+                if (rawValue.length > MAX_INPUT_LENGTH) {
+                    e.target.value = rawValue.substring(0, MAX_INPUT_LENGTH);
+                    debouncedGenerateQR(e.target.value.trim() ? e.target.value : "");
+                    return;
+                }
+
+                debouncedGenerateQR(rawValue.trim() ? rawValue : "");
+            });
+
+            window.addEventListener("resize", debouncedRefreshPreview);
+
+            function handleColorChange() {
+                if (input.value.trim()) generateQR(input.value);
+            }
+
+            function handleSizeChange() {
+                sizeValueLabel.textContent = `${sizeSlider.value}px`;
+                if (input.value.trim()) throttledGenerateQR(input.value);
+            }
+
+            colorDarkInput.addEventListener("input", handleColorChange);
+            colorLightInput.addEventListener("input", handleColorChange);
+
+            sizeSlider.addEventListener("input", () => {
+                container.classList.add("resizing");
+                handleSizeChange();
+            });
+
+            sizeSlider.addEventListener("change", () => {
+                container.classList.remove("resizing");
+            });
+
+            downloadBtn.addEventListener("click", downloadQRCode);
+            copyBtn.addEventListener("click", copyQRCode);
+
+            clearBtn.addEventListener("click", () => {
+                input.value = "";
+                input.style.height = '48px';
+                updateCharCounter(0);
+                clearBtn.classList.remove("visible");
+                generateQR("");
+                input.focus();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    if (container.classList.contains('expanded')) downloadQRCode();
+                }
+            });
+
+            if (window.matchMedia) {
+                window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+                    try {
+                        if (!localStorage.getItem(THEME_STORAGE_KEY)) applyTheme(e.matches);
+                    } catch (err) {
+                        applyTheme(e.matches);
+                    }
+                });
+            }
+
+            initTheme();
+        </script>
+    </body>
+</html>

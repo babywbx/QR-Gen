@@ -365,15 +365,16 @@
                 align-items: center;
                 gap: 0.5rem;
                 touch-action: manipulation;
-                transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s, filter 0.2s;
+                transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s, color 0.2s, border-color 0.2s, filter 0.2s;
             }
 
             .btn:hover {
                 transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(255, 105, 180, 0.4);
             }
 
             .btn:active {
-                transform: translateY(0);
+                transform: translateY(0) scale(0.96);
             }
 
             .btn:focus-visible {
@@ -389,7 +390,6 @@
 
             .btn-primary:hover {
                 filter: brightness(1.1);
-                box-shadow: 0 4px 12px rgba(255, 105, 180, 0.4);
             }
 
             .btn-secondary {
@@ -402,7 +402,6 @@
                 background: var(--accent-color);
                 color: white;
                 border-color: var(--accent-color);
-                box-shadow: 0 4px 12px rgba(255, 105, 180, 0.3);
             }
 
             .clear-btn {
@@ -927,6 +926,12 @@
                     initQRCode(input.value, colorDarkInput.value, colorLightInput.value, sizeSlider.value);
                 }
 
+                const originalText = downloadBtn.innerHTML;
+                const showFeedback = (text, duration = 2000) => {
+                    downloadBtn.innerHTML = text;
+                    setTimeout(() => { downloadBtn.innerHTML = originalText; }, duration);
+                };
+
                 try {
                     const link = document.createElement('a');
                     link.download = getDownloadFileName();
@@ -934,9 +939,10 @@
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
+                    showFeedback("✅ 已下载");
                 } catch (e) {
                     console.error("Download failed:", e);
-                    alert("下载失败，请重试");
+                    showFeedback("❌ 下载失败", 3000);
                 }
             }
 
